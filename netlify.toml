@@ -1,0 +1,21 @@
+[build]
+  publish = "livrables"
+
+[[edge_functions]]
+  function = "password-protection"
+  path = "/*"
+
+[[redirects]]
+  from = "/"
+  to = "/apercu-site/"
+  status = 302
+  force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+

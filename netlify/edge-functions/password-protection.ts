@@ -1,6 +1,17 @@
 const COOKIE_NAME = "senf_preview_session";
 const SESSION_DURATION_SECONDS = 60 * 60 * 24;
 
+type RuntimeGlobals = typeof globalThis & {
+  Netlify?: { env?: { get?: (name: string) => string | undefined } };
+  Deno?: { env?: { get?: (name: string) => string | undefined } };
+};
+
+function getPassword(): string | undefined {
+  const runtime = globalThis as RuntimeGlobals;
+  return runtime.Netlify?.env?.get?.("PROTECTED_PAGE_PASSWORD")
+    ?? runtime.Deno?.env?.get?.("PROTECTED_PAGE_PASSWORD");
+}
+
 function htmlPage(message = "", status = 200): Response {
   const error = message
     ? `<p class="message" role="alert">${escapeHtml(message)}</p>`
@@ -102,8 +113,8 @@ async function validSession(request: Request, password: string): Promise<boolean
   return timingSafeEqual(suppliedSignature, expectedSignature);
 }
 
-export default async (request: Request, context: { next: () => Promise<Response> }) => {
-  const password = Netlify.env.get("PROTECTED_PAGE_PASSWORD");
+async function handleRequest(request: Request, context: { next: () => Promise<Response> }): Promise<Response> {
+  const password = getPassword();
   if (!password) {
     return htmlPage("La protection n’est pas encore configurée par le propriétaire du site.", 503);
   }
@@ -142,5 +153,13 @@ export default async (request: Request, context: { next: () => Promise<Response>
   }
 
   return htmlPage();
-};
+}
 
+export default async (request: Request, context: { next: () => Promise<Response> }) => {
+  try {
+    return await handleRequest(request, context);
+  } catch (error) {
+    console.error("SENF password protection failed", error);
+    return htmlPage("Erreur technique temporaire. Veuillez reessayer dans quelques instants.", 500);
+  }
+};

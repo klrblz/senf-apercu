@@ -1,4 +1,4 @@
-﻿const COOKIE_NAME = "senf_preview_session";
+const COOKIE_NAME = "senf_preview_session";
 const SESSION_DURATION_SECONDS = 60 * 60 * 24;
 
 function htmlPage(message = "", status = 200): Response {
@@ -12,7 +12,7 @@ function htmlPage(message = "", status = 200): Response {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <title>AperÃ§u privÃ© â€” SENF</title>
+  <title>Aperçu privé — SENF</title>
   <style>
     :root { color-scheme: light; font-family: system-ui, sans-serif; }
     * { box-sizing: border-box; }
@@ -29,15 +29,15 @@ function htmlPage(message = "", status = 200): Response {
 </head>
 <body>
   <main>
-    <h1>AperÃ§u privÃ©</h1>
-    <p>Ce site est en cours de prÃ©paration. Saisissez le mot de passe communiquÃ© par la SENF.</p>
+    <h1>Aperçu privé</h1>
+    <p>Ce site est en cours de préparation. Saisissez le mot de passe communiqué par la SENF.</p>
     ${error}
     <form method="post">
       <label for="password">Mot de passe</label>
       <input id="password" name="password" type="password" required autofocus autocomplete="current-password">
       <button type="submit">Consulter le site</button>
     </form>
-    <small>Lâ€™accÃ¨s restera ouvert pendant 24 heures sur cet appareil.</small>
+    <small>L’accès restera ouvert pendant 24 heures sur cet appareil.</small>
   </main>
 </body>
 </html>`, {
@@ -105,7 +105,7 @@ async function validSession(request: Request, password: string): Promise<boolean
 export default async (request: Request, context: { next: () => Promise<Response> }) => {
   const password = Netlify.env.get("PROTECTED_PAGE_PASSWORD");
   if (!password) {
-    return htmlPage("La protection nâ€™est pas encore configurÃ©e par le propriÃ©taire du site.", 503);
+    return htmlPage("La protection n’est pas encore configurée par le propriétaire du site.", 503);
   }
 
   const url = new URL(request.url);
@@ -143,5 +143,4 @@ export default async (request: Request, context: { next: () => Promise<Response>
 
   return htmlPage();
 };
-
 

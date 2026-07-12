@@ -1,4 +1,4 @@
-const COOKIE_NAME = "senf_preview_session";
+﻿const COOKIE_NAME = "senf_preview_session";
 const SESSION_DURATION_SECONDS = 60 * 60 * 24;
 
 function htmlPage(message = "", status = 200): Response {
@@ -12,7 +12,7 @@ function htmlPage(message = "", status = 200): Response {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <title>Aperçu privé — SENF</title>
+  <title>AperÃ§u privÃ© â€” SENF</title>
   <style>
     :root { color-scheme: light; font-family: system-ui, sans-serif; }
     * { box-sizing: border-box; }
@@ -29,15 +29,15 @@ function htmlPage(message = "", status = 200): Response {
 </head>
 <body>
   <main>
-    <h1>Aperçu privé</h1>
-    <p>Ce site est en cours de préparation. Saisissez le mot de passe communiqué par la SENF.</p>
+    <h1>AperÃ§u privÃ©</h1>
+    <p>Ce site est en cours de prÃ©paration. Saisissez le mot de passe communiquÃ© par la SENF.</p>
     ${error}
     <form method="post">
       <label for="password">Mot de passe</label>
       <input id="password" name="password" type="password" required autofocus autocomplete="current-password">
       <button type="submit">Consulter le site</button>
     </form>
-    <small>L’accès restera ouvert pendant 24 heures sur cet appareil.</small>
+    <small>Lâ€™accÃ¨s restera ouvert pendant 24 heures sur cet appareil.</small>
   </main>
 </body>
 </html>`, {
@@ -103,16 +103,20 @@ async function validSession(request: Request, password: string): Promise<boolean
 }
 
 export default async (request: Request, context: { next: () => Promise<Response> }) => {
-  const password = Deno.env.get("PROTECTED_PAGE_PASSWORD");
+  const password = Netlify.env.get("PROTECTED_PAGE_PASSWORD");
   if (!password) {
-    return htmlPage("La protection n’est pas encore configurée par le propriétaire du site.", 503);
+    return htmlPage("La protection nâ€™est pas encore configurÃ©e par le propriÃ©taire du site.", 503);
   }
 
   const url = new URL(request.url);
   if (url.searchParams.get("logout") === "1") {
-    const response = Response.redirect(`${url.origin}/`, 303);
-    response.headers.append("set-cookie", `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`);
-    return response;
+    return new Response(null, {
+      status: 303,
+      headers: {
+        location: `${url.origin}/`,
+        "set-cookie": `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`,
+      },
+    });
   }
 
   if (await validSession(request, password)) return context.next();
@@ -125,12 +129,13 @@ export default async (request: Request, context: { next: () => Promise<Response>
     if (timingSafeEqual(suppliedHash, expectedHash)) {
       const expiresAt = Math.floor(Date.now() / 1000) + SESSION_DURATION_SECONDS;
       const signature = await sign(String(expiresAt), password);
-      const response = Response.redirect(request.url, 303);
-      response.headers.append(
-        "set-cookie",
-        `${COOKIE_NAME}=${expiresAt}.${signature}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${SESSION_DURATION_SECONDS}`,
-      );
-      return response;
+      return new Response(null, {
+        status: 303,
+        headers: {
+          location: request.url,
+          "set-cookie": `${COOKIE_NAME}=${expiresAt}.${signature}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${SESSION_DURATION_SECONDS}`,
+        },
+      });
     }
 
     return htmlPage("Mot de passe incorrect.", 401);
@@ -138,4 +143,5 @@ export default async (request: Request, context: { next: () => Promise<Response>
 
   return htmlPage();
 };
+
 
